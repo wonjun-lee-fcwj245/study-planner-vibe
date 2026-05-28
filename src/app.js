@@ -1,29 +1,35 @@
 /**
- * Study Planner — v0.1 (FR-01 + FR-02 + FR-07)
+ * Study Planner — v0.1 (FR-01, 02, 03, 04, 07)
  *
- * 본 파일은 다음 기능을 구현한다:
+ * 구현 기능:
  * - FR-01: 학습 항목 추가
- * - FR-02: 완료 상태 토글 (Day 9 추가)
- * - FR-07: 완료/미완료 시각 구분 (Day 9 추가)
+ * - FR-02: 완료 상태 토글
+ * - FR-03: 학습 항목 삭제 (Day 10 추가)
+ * - FR-04: localStorage 영속성 (Day 10 추가)
+ * - FR-07: 완료/미완료 시각 구분
  *
- * 데이터는 메모리에만 보관한다 — localStorage 영속성은 FR-04에서 별도 추가.
- *
- * 참조 문서:
- * - SRS 0.3: UC-01, UC-03, FR-01, FR-02, FR-07
- * - 04-data-model 3.1: Task 객체 6개 필드
- * - 03-wireframes 4.2: 메인 보드 영역 구성
- * - ADR-002: 순수 Vanilla JS (외부 라이브러리 금지)
+ * 참조: SRS 0.3, 04-data-model (3.1 필드, 4.2 키, 7장 무결성), ADR-001, ADR-002
  */
 
 // ─────────────────────────────────────────────
-// 상태 (메모리 내 tasks 배열)
+// 상수
 // ─────────────────────────────────────────────
 
-/** @type {Array<Task>} 학습 항목 배열. 본 이터레이션에서는 메모리에만 존재. */
+/** localStorage 키 (04-data-model 4.2) */
+const STORAGE_KEY = 'study-planner:tasks';
+
+/** Task 객체의 필수 필드 (04-data-model 3.1) — 무결성 검증용 */
+const REQUIRED_FIELDS = ['id', 'title', 'subject', 'completed', 'createdAt', 'completedAt'];
+
+// ─────────────────────────────────────────────
+// 상태
+// ─────────────────────────────────────────────
+
+/** @type {Array<Task>} */
 let tasks = [];
 
 // ─────────────────────────────────────────────
-// DOM 요소 참조 (한 번만 조회)
+// DOM 참조
 // ─────────────────────────────────────────────
 
 const titleInput = document.getElementById('task-title-input');
@@ -34,15 +40,76 @@ const emptyStateEl = document.getElementById('empty-state');
 const todayDateEl = document.getElementById('today-date');
 
 // ─────────────────────────────────────────────
-// 함수 정의 — FR-01 (기존)
+// FR-04: localStorage 영속성 (Day 10 추가)
+// ─────────────────────────────────────────────
+
+/**
+ * tasks 배열을 localStorage에 저장한다.
+ * 04-data-model 7.1: localStorage 사용 불가 환경(시크릿 모드 등)에서도 앱이 죽지 않도록 try-catch.
+ * NFR-06: 외부 서버 전송 없이 로컬에만 저장.
+ */
+function saveTasks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  } catch (e) {
+    // QuotaExceededError, 시크릿 모드의 SecurityError 등
+    console.warn('저장 실패 — 데이터가 영속되지 않습니다:', e.message);
+  }
+}
+
+/**
+ * localStorage에서 tasks 배열을 불러온다.
+ * 04-data-model 7.1 무결성 시나리오 전부 처리:
+ * - 키 없음(첫 사용) → 빈 배열
+ * - JSON 파싱 실패 → 빈 배열 + 경고
+ * - 배열이 아님 → 빈 배열 + 경고
+ * - 필수 필드 누락 항목 → 해당 항목만 제외
+ * @returns {Array<Task>}
+ */
+function loadTasks() {
+  let raw;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch (e) {
+    console.warn('localStorage 접근 불가 — 메모리 모드로 동작:', e.message);
+    return [];
+  }
+
+  if (raw === null) return [];  // 첫 사용
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    console.warn('저장 데이터 파싱 실패 — 빈 상태로 초기화:', e.message);
+    return [];
+  }
+
+  if (!Array.isArray(parsed)) {
+    console.warn('저장 데이터가 배열이 아님 — 빈 상태로 초기화');
+    return [];
+  }
+
+  // 필수 필드 검증 — 누락된 항목은 제외 (04-data-model 7.1)
+  const valid = parsed.filter(item => {
+    const ok = item && typeof item === 'object' &&
+               REQUIRED_FIELDS.every(field => field in item);
+    if (!ok) console.warn('필수 필드 누락 항목 무시:', item);
+    return ok;
+  });
+
+  return valid;
+}
+
+// ─────────────────────────────────────────────
+// FR-01: 추가
 // ─────────────────────────────────────────────
 
 function renderTodayDate() {
   const today = new Date();
-  const formatted = today.toLocaleDateString('ko-KR', {
+  todayDateEl.textContent = today.toLocaleDateString('ko-KR', {
     year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
   });
-  todayDateEl.textContent = formatted;
 }
 
 function createTask(title, subject) {
@@ -60,17 +127,14 @@ function addTask() {
   const title = titleInput.value;
   if (!title.trim()) return;
 
-  const task = createTask(title, subjectInput.value);
-  tasks.unshift(task);
-
+  tasks.unshift(createTask(title, subjectInput.value));
   titleInput.value = '';
   subjectInput.value = '';
   updateAddButtonState();
 
+  saveTasks();        // FR-04: 변경 시점에 저장
   renderTaskList();
   titleInput.focus();
-
-  console.log('Task added:', task);
 }
 
 function updateAddButtonState() {
@@ -78,31 +142,44 @@ function updateAddButtonState() {
 }
 
 // ─────────────────────────────────────────────
-// 함수 정의 — FR-02 (Day 9 추가)
+// FR-02: 완료 토글
 // ─────────────────────────────────────────────
 
-/**
- * 학습 항목의 완료 상태를 토글한다. (UC-03 기본 흐름 1~5)
- * 대체 흐름 1a: 이미 완료된 항목을 다시 클릭하면 미완료로 복귀.
- *
- * @param {string} taskId - 토글할 항목의 id
- */
 function toggleTaskCompletion(taskId) {
   const task = tasks.find(t => t.id === taskId);
   if (!task) return;
 
   task.completed = !task.completed;
-
-  // UC-03 기본 흐름 3: 완료 시각 기록.
-  // 대체 흐름 1a: 미완료 복귀 시 completedAt을 null로 되돌림 (실수 복구의 의미 보존).
   task.completedAt = task.completed ? new Date().toISOString() : null;
 
+  saveTasks();        // FR-04: 변경 시점에 저장
   renderTaskList();
-  console.log('Task toggled:', task);
 }
 
 // ─────────────────────────────────────────────
-// 렌더링 함수 (Day 9에 FR-02, FR-07 적용)
+// FR-03: 삭제 (Day 10 추가)
+// ─────────────────────────────────────────────
+
+/**
+ * 학습 항목을 삭제한다. (UC-04 기본 흐름 1~4)
+ * 대체 흐름 2a: 사용자가 확인창에서 취소하면 유지.
+ * @param {string} taskId
+ */
+function deleteTask(taskId) {
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  // UC-04 기본 흐름 2: 삭제 확인
+  const confirmed = window.confirm(`"${task.title}" 항목을 삭제할까요?`);
+  if (!confirmed) return;  // 대체 흐름 2a
+
+  tasks = tasks.filter(t => t.id !== taskId);
+  saveTasks();        // FR-04: 변경 시점에 저장
+  renderTaskList();
+}
+
+// ─────────────────────────────────────────────
+// 렌더링 (FR-03 삭제 버튼 추가)
 // ─────────────────────────────────────────────
 
 function renderTaskList() {
@@ -114,41 +191,35 @@ function renderTaskList() {
   emptyStateEl.hidden = true;
 
   taskListEl.innerHTML = tasks.map(task => {
-    // FR-07: 완료 항목에 수정자 클래스 부여
     const modifierClass = task.completed ? ' task-item--completed' : '';
-    // FR-02: 완료 시각 메타 표시
     const completedMeta = task.completed && task.completedAt
       ? ` <span class="task-item-completed-time">→ 완료 ${formatTime(task.completedAt)}</span>`
       : '';
 
     return `
       <li class="task-item${modifierClass}" data-task-id="${task.id}">
-        <input
-          type="checkbox"
-          class="task-item-checkbox"
-          ${task.completed ? 'checked' : ''}
-          aria-label="${escapeHtml(task.title)} 완료 토글"
-        >
+        <input type="checkbox" class="task-item-checkbox"
+               ${task.completed ? 'checked' : ''}
+               aria-label="${escapeHtml(task.title)} 완료 토글">
         <div class="task-item-body">
           <div class="task-item-title">${escapeHtml(task.title)}</div>
           <div class="task-item-meta">
             ${escapeHtml(task.subject)} · ${formatTime(task.createdAt)}${completedMeta}
           </div>
         </div>
+        <button class="task-item-delete" aria-label="${escapeHtml(task.title)} 삭제">삭제</button>
       </li>
     `;
   }).join('');
 }
 
 // ─────────────────────────────────────────────
-// 유틸리티 함수 (기존)
+// 유틸리티
 // ─────────────────────────────────────────────
 
 function formatTime(isoString) {
   const d = new Date(isoString);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 function escapeHtml(str) {
@@ -161,34 +232,32 @@ function escapeHtml(str) {
 // 이벤트 바인딩
 // ─────────────────────────────────────────────
 
-// FR-01 이벤트 (기존)
+// FR-01
 titleInput.addEventListener('input', updateAddButtonState);
 addButton.addEventListener('click', addTask);
-titleInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !addButton.disabled) addTask();
-});
-subjectInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !addButton.disabled) addTask();
-});
+titleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !addButton.disabled) addTask(); });
+subjectInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !addButton.disabled) addTask(); });
 
-// FR-02 이벤트 (Day 9 추가) — 이벤트 위임 사용
-// ul#task-list에 한 번만 부착하여 모든 체크박스 처리.
-// 항목 추가 시마다 새 리스너 부착 불필요 → 메모리/성능 측면에서 효율적.
+// FR-02: 체크박스 change (이벤트 위임)
 taskListEl.addEventListener('change', (e) => {
   if (!e.target.classList.contains('task-item-checkbox')) return;
-
   const taskItem = e.target.closest('.task-item');
-  if (!taskItem) return;
+  if (taskItem) toggleTaskCompletion(taskItem.dataset.taskId);
+});
 
-  const taskId = taskItem.dataset.taskId;
-  toggleTaskCompletion(taskId);
+// FR-03: 삭제 버튼 click (이벤트 위임 — Day 10 추가)
+taskListEl.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('task-item-delete')) return;
+  const taskItem = e.target.closest('.task-item');
+  if (taskItem) deleteTask(taskItem.dataset.taskId);
 });
 
 // ─────────────────────────────────────────────
-// 초기 실행
+// 초기 실행 (FR-04: 저장된 데이터 로딩)
 // ─────────────────────────────────────────────
 
+tasks = loadTasks();   // FR-04: 앱 시작 시 복원
 renderTodayDate();
 renderTaskList();
 
-console.log('Study Planner v0.1 (FR-01 + FR-02 + FR-07) — initialized');
+console.log('Study Planner v0.1 (FR-01,02,03,04,07) — initialized,', tasks.length, 'tasks loaded');
