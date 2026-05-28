@@ -1,6 +1,6 @@
 /* ============================================
    Study Planner — v0.1 styles
-   FR-01 (Day 8) + FR-07 완료 시각 구분 (Day 9)
+   FR-01 (Day 8) + FR-07 (Day 9) + FR-03 삭제 버튼 (Day 10)
    ============================================ */
 
 * { box-sizing: border-box; }
@@ -24,10 +24,7 @@ body {
   padding: 1.5rem;
 }
 
-/* ─────────────────────────────────────────────
-   영역 A: 헤더
-   ───────────────────────────────────────────── */
-
+/* 영역 A: 헤더 */
 .board-header {
   display: flex;
   justify-content: space-between;
@@ -37,27 +34,11 @@ body {
   margin-bottom: 1.25rem;
 }
 
-.board-title h1 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-}
+.board-title h1 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+.board-date { font-size: 0.875rem; color: #6e6e73; margin: 0.25rem 0 0 0; }
 
-.board-date {
-  font-size: 0.875rem;
-  color: #6e6e73;
-  margin: 0.25rem 0 0 0;
-}
-
-/* ─────────────────────────────────────────────
-   영역 B: 입력
-   ───────────────────────────────────────────── */
-
-.board-input {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-}
+/* 영역 B: 입력 */
+.board-input { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
 
 .board-input input[type="text"] {
   padding: 0.6rem 0.75rem;
@@ -83,15 +64,9 @@ body {
 }
 
 #add-task-button:hover:not(:disabled) { background: #0077ed; }
-#add-task-button:disabled {
-  background: #d1d1d6;
-  cursor: not-allowed;
-}
+#add-task-button:disabled { background: #d1d1d6; cursor: not-allowed; }
 
-/* ─────────────────────────────────────────────
-   영역 D: 항목 목록
-   ───────────────────────────────────────────── */
-
+/* 영역 D: 항목 목록 */
 #task-list {
   list-style: none;
   padding: 0;
@@ -109,63 +84,38 @@ body {
   border: 1px solid #e5e5ea;
   border-radius: 8px;
   background: #ffffff;
-  /* FR-07: 상태 변화 시 부드러운 전환 */
   transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 
-.task-item-checkbox {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  /* NFR-04 키보드 접근성: 시스템 기본 포커스 링 유지 */
-}
-
+.task-item-checkbox { width: 18px; height: 18px; cursor: pointer; }
 .task-item-body { flex: 1; }
+.task-item-title { font-size: 0.95rem; transition: text-decoration 0.2s ease; }
+.task-item-meta { font-size: 0.8rem; color: #6e6e73; margin-top: 0.15rem; }
+.task-item-completed-time { color: #34c759; font-weight: 500; }
 
-.task-item-title {
-  font-size: 0.95rem;
-  transition: text-decoration 0.2s ease;
-}
-
-.task-item-meta {
+/* FR-03: 삭제 버튼 (Day 10 추가) */
+.task-item-delete {
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  color: #ff3b30;
+  border: 1px solid #ffd5d2;
+  border-radius: 6px;
   font-size: 0.8rem;
-  color: #6e6e73;
-  margin-top: 0.15rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
 }
 
-/* FR-02 완료 시각의 시각적 강조 */
-.task-item-completed-time {
-  color: #34c759;
-  font-weight: 500;
+.task-item-delete:hover {
+  background: #fff0ef;
+  border-color: #ff3b30;
 }
 
-/* ─────────────────────────────────────────────
-   FR-07: 완료 항목 시각 구분 (Day 9 추가)
-   ───────────────────────────────────────────── */
+/* FR-07: 완료 항목 시각 구분 */
+.task-item--completed { background: #f5f5f7; border-color: #e5e5ea; }
+.task-item--completed .task-item-title { text-decoration: line-through; color: #8e8e93; }
+.task-item--completed .task-item-meta { color: #aeaeb2; }
 
-.task-item--completed {
-  background: #f5f5f7;
-  border-color: #e5e5ea;
-}
-
-.task-item--completed .task-item-title {
-  text-decoration: line-through;
-  color: #8e8e93;
-}
-
-.task-item--completed .task-item-meta {
-  color: #aeaeb2;
-}
-
-/* ─────────────────────────────────────────────
-   빈 상태
-   ───────────────────────────────────────────── */
-
-.empty-state {
-  text-align: center;
-  color: #8e8e93;
-  padding: 2rem 0;
-  margin: 0;
-}
-
+/* 빈 상태 */
+.empty-state { text-align: center; color: #8e8e93; padding: 2rem 0; margin: 0; }
 .empty-state[hidden] { display: none; }
