@@ -8,38 +8,32 @@
 </head>
 <body>
   <main id="app">
-    <!-- 영역 A: 헤더 (와이어프레임 4.2 참조) -->
+    <!-- 영역 A: 헤더 -->
     <header class="board-header">
       <div class="board-title">
         <h1>Study Planner</h1>
         <p class="board-date" id="today-date"></p>
       </div>
-      <!-- 진도 카드는 FR-08(이터레이션 2)에서 채움. 지금은 자리만 -->
       <div class="progress-card" id="progress-card" hidden></div>
     </header>
 
-    <!-- 영역 B: 입력 (UC-01 기본 흐름 1~4) -->
+    <!-- 영역 B: 입력 -->
     <section class="board-input">
-      <input
-        type="text"
-        id="task-title-input"
-        placeholder="학습 항목을 입력하세요... (Enter로 추가)"
-        autocomplete="off"
-      >
-      <input
-        type="text"
-        id="task-subject-input"
-        placeholder="과목 (선택)"
-        autocomplete="off"
-      >
+      <input type="text" id="task-title-input"
+             placeholder="학습 항목을 입력하세요... (Enter로 추가)" autocomplete="off">
+      <input type="text" id="task-subject-input"
+             placeholder="과목 (선택)" autocomplete="off">
       <button id="add-task-button" disabled>추가</button>
     </section>
 
-    <!-- 영역 D: 항목 목록 (UC-02) -->
+    <!-- 영역 C: 필터 (Day 12 추가 - FR-06) -->
+    <section class="board-filter" id="filter-area">
+      <!-- 필터 칩은 app.js에서 동적으로 렌더링 -->
+    </section>
+
+    <!-- 영역 D: 항목 목록 -->
     <section class="board-list">
-      <ul id="task-list">
-        <!-- 항목은 app.js에서 동적으로 렌더링 -->
-      </ul>
+      <ul id="task-list"></ul>
       <p id="empty-state" class="empty-state">
         오늘 학습할 내용을 추가해보세요
       </p>
@@ -49,3 +43,4 @@
   <script src="app.js"></script>
 </body>
 </html>
+
