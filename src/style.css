@@ -1,6 +1,6 @@
 /* ============================================
-   Study Planner — v0.1 styles
-   FR-01 (Day 8) + FR-07 (Day 9) + FR-03 삭제 버튼 (Day 10)
+   Study Planner styles
+   Day 8 FR-01 / Day 9 FR-07 / Day 10 FR-03 / Day 12 FR-06 필터 칩
    ============================================ */
 
 * { box-sizing: border-box; }
@@ -66,6 +66,45 @@ body {
 #add-task-button:hover:not(:disabled) { background: #0077ed; }
 #add-task-button:disabled { background: #d1d1d6; cursor: not-allowed; }
 
+/* ─────────────────────────────────────────────
+   영역 C: 필터 칩 (Day 12 추가 - FR-06)
+   ───────────────────────────────────────────── */
+
+.board-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.board-filter:empty {
+  margin-bottom: 0;   /* 빈 상태일 때 여백 제거 */
+}
+
+.filter-chip {
+  padding: 0.35rem 0.8rem;
+  background: #f5f5f7;
+  border: 1px solid #e5e5ea;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.filter-chip:hover { background: #ebebef; }
+
+.filter-chip--active {
+  background: #1d1d1f;
+  border-color: #1d1d1f;
+  color: #ffffff;
+}
+
+.filter-chip--active:hover {
+  background: #2c2c2e;
+}
+
 /* 영역 D: 항목 목록 */
 #task-list {
   list-style: none;
@@ -93,7 +132,6 @@ body {
 .task-item-meta { font-size: 0.8rem; color: #6e6e73; margin-top: 0.15rem; }
 .task-item-completed-time { color: #34c759; font-weight: 500; }
 
-/* FR-03: 삭제 버튼 (Day 10 추가) */
 .task-item-delete {
   padding: 0.35rem 0.7rem;
   background: transparent;
@@ -106,10 +144,7 @@ body {
   flex-shrink: 0;
 }
 
-.task-item-delete:hover {
-  background: #fff0ef;
-  border-color: #ff3b30;
-}
+.task-item-delete:hover { background: #fff0ef; border-color: #ff3b30; }
 
 /* FR-07: 완료 항목 시각 구분 */
 .task-item--completed { background: #f5f5f7; border-color: #e5e5ea; }
