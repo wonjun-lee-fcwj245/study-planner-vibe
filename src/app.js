@@ -1,13 +1,13 @@
 /**
- * Study Planner — v0.2 작업 중 (이터1 + FR-06 + FR-08)
+ * Study Planner — v0.2 작업 중 (이터1 + FR-06 + FR-08 + FR-09)
  *
- * Day 13 추가: FR-08 (오늘의 진도율 표시)
- *   - isSameDay 헬퍼 함수
- *   - renderProgressCard() 함수
- *   - renderAll()이 진도 카드도 갱신
+ * Day 14 추가: FR-09 (7일 일별 완료 항목 차트)
+ *   - getWeeklyData() 헬퍼
+ *   - renderWeeklyChart() CSS 막대 직접 구현 (ADR-003)
+ *   - renderAll()이 차트도 갱신
  *
- * 참조: SRS 0.3 FR-08, UC-02; 03-wireframes 4.2 영역 A;
- *      04-data-model 5.1 (오늘의 진도율 알고리즘).
+ * 참조: SRS 0.3 FR-09, UC-05; 03-wireframes 5.2 영역 C; 04-data-model 5.2;
+ *      ADR-002 (Vanilla JS), **ADR-003 (차트 라이브러리 거절)**.
  */
 
 // ─────────────────────────────────────────────
@@ -17,6 +17,8 @@
 const STORAGE_KEY = 'study-planner:tasks';
 const REQUIRED_FIELDS = ['id', 'title', 'subject', 'completed', 'createdAt', 'completedAt'];
 const FILTER_ALL = 'all';
+
+const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
 
 // ─────────────────────────────────────────────
 // 상태
@@ -36,30 +38,28 @@ const taskListEl = document.getElementById('task-list');
 const emptyStateEl = document.getElementById('empty-state');
 const todayDateEl = document.getElementById('today-date');
 const filterAreaEl = document.getElementById('filter-area');
-const progressCardEl = document.getElementById('progress-card');   // Day 13 추가
+const progressCardEl = document.getElementById('progress-card');
+const weeklyChartEl = document.getElementById('weekly-chart');   // Day 14 추가
 
 // ─────────────────────────────────────────────
-// FR-04: localStorage 영속성 (기존 — 무변경)
+// FR-04: localStorage (기존)
 // ─────────────────────────────────────────────
 
 function saveTasks() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  } catch (e) {
-    console.warn('저장 실패:', e.message);
-  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+  catch (e) { console.warn('저장 실패:', e.message); }
 }
 
 function loadTasks() {
   let raw;
   try { raw = localStorage.getItem(STORAGE_KEY); }
-  catch (e) { console.warn('localStorage 접근 불가:', e.message); return []; }
+  catch (e) { console.warn('접근 불가:', e.message); return []; }
   if (raw === null) return [];
 
   let parsed;
   try { parsed = JSON.parse(raw); }
   catch (e) { console.warn('파싱 실패:', e.message); return []; }
-  if (!Array.isArray(parsed)) { console.warn('배열 아님'); return []; }
+  if (!Array.isArray(parsed)) return [];
 
   return parsed.filter(item => {
     const ok = item && typeof item === 'object' &&
@@ -70,7 +70,7 @@ function loadTasks() {
 }
 
 // ─────────────────────────────────────────────
-// FR-01: 추가 (기존 — 무변경)
+// FR-01: 추가 (기존)
 // ─────────────────────────────────────────────
 
 function renderTodayDate() {
@@ -110,7 +110,7 @@ function updateAddButtonState() {
 }
 
 // ─────────────────────────────────────────────
-// FR-02: 완료 토글 (기존 + Day 13: 진도 카드도 갱신)
+// FR-02: 완료 토글 (기존)
 // ─────────────────────────────────────────────
 
 function toggleTaskCompletion(taskId) {
@@ -121,12 +121,11 @@ function toggleTaskCompletion(taskId) {
   task.completedAt = task.completed ? new Date().toISOString() : null;
 
   saveTasks();
-  // Day 13: 토글이 진도율을 바꾸므로 renderAll로 변경
   renderAll();
 }
 
 // ─────────────────────────────────────────────
-// FR-03: 삭제 (기존 — 무변경)
+// FR-03: 삭제 (기존)
 // ─────────────────────────────────────────────
 
 function deleteTask(taskId) {
@@ -148,12 +147,11 @@ function deleteTask(taskId) {
 }
 
 // ─────────────────────────────────────────────
-// FR-06: 필터 (기존 — 무변경)
+// FR-06: 필터 (기존)
 // ─────────────────────────────────────────────
 
 function getSubjectList() {
-  const subjects = new Set(tasks.map(t => t.subject));
-  return Array.from(subjects).sort();
+  return Array.from(new Set(tasks.map(t => t.subject))).sort();
 }
 
 function renderFilterChips() {
@@ -192,16 +190,9 @@ function setFilter(filter) {
 }
 
 // ─────────────────────────────────────────────
-// FR-08: 오늘의 진도율 (Day 13 추가)
+// FR-08: 진도 카드 (기존)
 // ─────────────────────────────────────────────
 
-/**
- * 두 시각이 같은 날(YYYY-MM-DD)인지 검증.
- * 로컬 타임존 기준으로 비교 — 사용자가 보는 "오늘"과 일치.
- * @param {string|Date} a
- * @param {string|Date} b
- * @returns {boolean}
- */
 function isSameDay(a, b) {
   const d1 = new Date(a);
   const d2 = new Date(b);
@@ -210,16 +201,10 @@ function isSameDay(a, b) {
          d1.getDate() === d2.getDate();
 }
 
-/**
- * 오늘 생성된 항목들의 진도율을 계산하여 헤더 카드에 표시한다.
- * 04-data-model 5.1 알고리즘 그대로 적용.
- * 필터(currentFilter)와 무관 — 항상 전체 오늘 항목 기준.
- */
 function renderProgressCard() {
   const today = new Date();
   const todayTasks = tasks.filter(t => isSameDay(t.createdAt, today));
 
-  // 엣지 케이스: 오늘 항목 0개
   if (todayTasks.length === 0) {
     progressCardEl.innerHTML = `
       <div class="progress-card-label">오늘 진도</div>
@@ -229,7 +214,6 @@ function renderProgressCard() {
   }
 
   const completed = todayTasks.filter(t => t.completed).length;
-  // Math.round로 반올림 — 33.33% → 33%, 33.5% → 34%
   const rate = Math.round((completed / todayTasks.length) * 100);
 
   progressCardEl.innerHTML = `
@@ -240,13 +224,92 @@ function renderProgressCard() {
 }
 
 // ─────────────────────────────────────────────
-// 렌더링 (Day 13: renderAll이 진도 카드도 갱신)
+// FR-09: 주간 차트 (Day 14 추가)
+// ─────────────────────────────────────────────
+
+/**
+ * 지난 7일간 일별 완료 항목 수를 계산한다.
+ * 04-data-model 5.2 알고리즘 적용 (completedAt 기준).
+ * 필터(currentFilter)와 무관 — 항상 전체 데이터 기준 (검증 기준 8).
+ *
+ * @returns {Array<{date: Date, count: number, isToday: boolean, label: string}>}
+ *          오래된 날짜부터 오늘까지 7개 (검증 기준 1, 2, 3 모두 대응)
+ */
+function getWeeklyData() {
+  const today = new Date();
+  const result = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - i);
+
+    const count = tasks.filter(t =>
+      t.completed && t.completedAt && isSameDay(t.completedAt, day)
+    ).length;
+
+    result.push({
+      date: day,
+      count,
+      isToday: i === 0,
+      label: WEEKDAY_KO[day.getDay()]
+    });
+  }
+
+  return result;
+}
+
+/**
+ * 주간 차트를 렌더링한다. ADR-003에 따라 CSS 막대로 직접 구현.
+ * height는 그 주의 최대값 대비 비율로 결정 — 모든 막대가 0이면 모두 0% (검증 기준 2, 3, 4).
+ */
+function renderWeeklyChart() {
+  const data = getWeeklyData();
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+
+  // 검증 기준 2: 데이터 0건일 때 안내 메시지
+  if (total === 0) {
+    weeklyChartEl.innerHTML = `
+      <div class="weekly-chart-title">최근 7일 완료 항목</div>
+      <div class="weekly-chart-empty">완료된 항목이 아직 없습니다</div>
+    `;
+    return;
+  }
+
+  // 검증 기준 4: 최대값 기준으로 비율 계산 → 막대가 영역을 벗어나지 않음
+  const maxCount = Math.max(...data.map(d => d.count));
+
+  const bars = data.map(d => {
+    // 막대 높이 % — maxCount가 1이면 그 날만 100%, 다른 날은 0%
+    const heightPct = maxCount > 0 ? (d.count / maxCount) * 100 : 0;
+    // 검증 기준 5: 0인 날은 카운트 숨김, 그 외 표시
+    const countLabel = d.count > 0 ? `<span class="weekly-chart-count">${d.count}</span>` : '';
+    // 검증 기준 6: 오늘 막대는 강조 클래스 추가
+    const todayClass = d.isToday ? ' weekly-chart-bar-wrapper--today' : '';
+
+    return `
+      <div class="weekly-chart-bar-wrapper${todayClass}">
+        ${countLabel}
+        <div class="weekly-chart-bar" style="height: ${heightPct}%"></div>
+        <div class="weekly-chart-label">${d.label}</div>
+      </div>
+    `;
+  }).join('');
+
+  weeklyChartEl.innerHTML = `
+    <div class="weekly-chart-title">최근 7일 완료 항목</div>
+    <div class="weekly-chart-bars">${bars}</div>
+  `;
+}
+
+// ─────────────────────────────────────────────
+// 렌더링 (Day 14: renderAll에 차트 추가)
 // ─────────────────────────────────────────────
 
 function renderAll() {
-  renderProgressCard();   // Day 13 추가
+  renderProgressCard();
   renderFilterChips();
   renderTaskList();
+  renderWeeklyChart();   // Day 14 추가
 }
 
 function renderTaskList() {
@@ -288,7 +351,7 @@ function renderTaskList() {
 }
 
 // ─────────────────────────────────────────────
-// 유틸리티 (기존 — 무변경)
+// 유틸리티
 // ─────────────────────────────────────────────
 
 function formatTime(isoString) {
@@ -303,7 +366,7 @@ function escapeHtml(str) {
 }
 
 // ─────────────────────────────────────────────
-// 이벤트 바인딩 (기존 — 무변경)
+// 이벤트 바인딩
 // ─────────────────────────────────────────────
 
 titleInput.addEventListener('input', updateAddButtonState);
@@ -337,4 +400,4 @@ tasks = loadTasks();
 renderTodayDate();
 renderAll();
 
-console.log('Study Planner v0.2 (with FR-08 progress) —', tasks.length, 'tasks loaded');
+console.log('Study Planner v0.2 (with FR-09 chart) —', tasks.length, 'tasks loaded');

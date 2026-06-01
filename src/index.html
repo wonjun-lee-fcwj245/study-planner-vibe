@@ -14,10 +14,7 @@
         <h1>Study Planner</h1>
         <p class="board-date" id="today-date"></p>
       </div>
-      <!-- 진도 카드 (Day 13 활성화 - FR-08) -->
-      <div class="progress-card" id="progress-card">
-        <!-- 내용은 app.js의 renderProgressCard()에서 동적 생성 -->
-      </div>
+      <div class="progress-card" id="progress-card"></div>
     </header>
 
     <!-- 영역 B: 입력 -->
@@ -29,7 +26,7 @@
       <button id="add-task-button" disabled>추가</button>
     </section>
 
-    <!-- 영역 C: 필터 (Day 12) -->
+    <!-- 영역 C: 필터 -->
     <section class="board-filter" id="filter-area"></section>
 
     <!-- 영역 D: 항목 목록 -->
@@ -38,6 +35,11 @@
       <p id="empty-state" class="empty-state">
         오늘 학습할 내용을 추가해보세요
       </p>
+    </section>
+
+    <!-- 영역 E: 주간 차트 (Day 14 추가 - FR-09) -->
+    <section class="weekly-chart" id="weekly-chart">
+      <!-- 차트는 app.js의 renderWeeklyChart()에서 동적 생성 -->
     </section>
   </main>
 
