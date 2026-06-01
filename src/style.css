@@ -1,6 +1,6 @@
 /* ============================================
    Study Planner styles
-   Day 8 FR-01 / Day 9 FR-07 / Day 10 FR-03 / Day 12 FR-06 필터 칩
+   Day 13 추가: FR-08 진도 카드
    ============================================ */
 
 * { box-sizing: border-box; }
@@ -37,6 +37,44 @@ body {
 .board-title h1 { font-size: 1.25rem; font-weight: 600; margin: 0; }
 .board-date { font-size: 0.875rem; color: #6e6e73; margin: 0.25rem 0 0 0; }
 
+/* ─────────────────────────────────────────────
+   FR-08: 진도 카드 (Day 13 추가)
+   ───────────────────────────────────────────── */
+
+.progress-card {
+  background: #f5f5f7;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  min-width: 90px;
+  transition: background 0.2s ease;
+}
+
+.progress-card-label {
+  font-size: 0.7rem;
+  color: #6e6e73;
+  margin-bottom: 0.15rem;
+  letter-spacing: 0.02em;
+}
+
+.progress-card-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  line-height: 1;
+}
+
+.progress-card-detail {
+  font-size: 0.7rem;
+  color: #8e8e93;
+  margin-top: 0.2rem;
+}
+
+.progress-card-empty {
+  font-size: 0.85rem;
+  color: #8e8e93;
+}
+
 /* 영역 B: 입력 */
 .board-input { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
 
@@ -66,20 +104,9 @@ body {
 #add-task-button:hover:not(:disabled) { background: #0077ed; }
 #add-task-button:disabled { background: #d1d1d6; cursor: not-allowed; }
 
-/* ─────────────────────────────────────────────
-   영역 C: 필터 칩 (Day 12 추가 - FR-06)
-   ───────────────────────────────────────────── */
-
-.board-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 1.25rem;
-}
-
-.board-filter:empty {
-  margin-bottom: 0;   /* 빈 상태일 때 여백 제거 */
-}
+/* 영역 C: 필터 칩 (Day 12) */
+.board-filter { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
+.board-filter:empty { margin-bottom: 0; }
 
 .filter-chip {
   padding: 0.35rem 0.8rem;
@@ -94,16 +121,8 @@ body {
 }
 
 .filter-chip:hover { background: #ebebef; }
-
-.filter-chip--active {
-  background: #1d1d1f;
-  border-color: #1d1d1f;
-  color: #ffffff;
-}
-
-.filter-chip--active:hover {
-  background: #2c2c2e;
-}
+.filter-chip--active { background: #1d1d1f; border-color: #1d1d1f; color: #ffffff; }
+.filter-chip--active:hover { background: #2c2c2e; }
 
 /* 영역 D: 항목 목록 */
 #task-list {
