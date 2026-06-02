@@ -1,6 +1,6 @@
 /* ============================================
-   Study Planner styles
-   Day 14 추가: FR-09 주간 차트 (ADR-003 - CSS 막대 직접 구현)
+   Study Planner styles — v0.2
+   Day 15 추가: FR-10 과목별 완료율 진행 바
    ============================================ */
 
 * { box-sizing: border-box; }
@@ -54,7 +54,6 @@ body {
 
 /* 영역 B: 입력 */
 .board-input { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
-
 .board-input input[type="text"] {
   padding: 0.6rem 0.75rem;
   border: 1px solid #d1d1d6;
@@ -62,7 +61,6 @@ body {
   font-size: 0.95rem;
   font-family: inherit;
 }
-
 #task-title-input { flex: 1; }
 #task-subject-input { width: 140px; }
 
@@ -77,7 +75,6 @@ body {
   cursor: pointer;
   transition: background 0.15s ease;
 }
-
 #add-task-button:hover:not(:disabled) { background: #0077ed; }
 #add-task-button:disabled { background: #d1d1d6; cursor: not-allowed; }
 
@@ -96,7 +93,6 @@ body {
   transition: all 0.15s ease;
   font-family: inherit;
 }
-
 .filter-chip:hover { background: #ebebef; }
 .filter-chip--active { background: #1d1d1f; border-color: #1d1d1f; color: #ffffff; }
 .filter-chip--active:hover { background: #2c2c2e; }
@@ -132,7 +128,6 @@ body {
   transition: background 0.15s ease, border-color 0.15s ease;
   flex-shrink: 0;
 }
-
 .task-item-delete:hover { background: #fff0ef; border-color: #ff3b30; }
 
 /* FR-07: 완료 항목 시각 구분 */
@@ -140,19 +135,15 @@ body {
 .task-item--completed .task-item-title { text-decoration: line-through; color: #8e8e93; }
 .task-item--completed .task-item-meta { color: #aeaeb2; }
 
-/* 빈 상태 */
 .empty-state { text-align: center; color: #8e8e93; padding: 2rem 0; margin: 0; }
 .empty-state[hidden] { display: none; }
 
 /* ─────────────────────────────────────────────
-   영역 E: FR-09 주간 차트 (Day 14 추가, ADR-003 CSS 막대)
+   FR-09: 주간 차트 (Day 14)
    ───────────────────────────────────────────── */
 
-.weekly-chart {
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #e5e5ea;
-}
+.weekly-chart { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e5e5ea; }
+.weekly-chart:empty { margin: 0; padding: 0; border: 0; }
 
 .weekly-chart-title {
   font-size: 0.8rem;
@@ -165,7 +156,7 @@ body {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
-  height: 100px;            /* 검증 기준 4: max-height 가드 — 막대가 영역을 벗어나지 않음 */
+  height: 100px;
   padding: 0 0.25rem;
 }
 
@@ -179,16 +170,14 @@ body {
   position: relative;
 }
 
-/* 막대 본체 — height는 JS에서 인라인 style로 지정 */
 .weekly-chart-bar {
   width: 100%;
   background: #0071e3;
   border-radius: 4px 4px 0 0;
-  min-height: 2px;          /* count가 0이어도 최소 흔적 (단, 0% height면 안 보임) */
+  min-height: 2px;
   transition: height 0.3s ease;
 }
 
-/* 카운트 라벨 (막대 위) */
 .weekly-chart-count {
   position: absolute;
   top: -1.1rem;
@@ -197,32 +186,72 @@ body {
   font-weight: 500;
 }
 
-/* 요일 라벨 (막대 아래) */
 .weekly-chart-label {
   font-size: 0.7rem;
   color: #8e8e93;
   margin-top: 0.35rem;
 }
 
-/* 검증 기준 6: 오늘 막대 강조 */
-.weekly-chart-bar-wrapper--today .weekly-chart-bar {
-  background: #1d1d1f;     /* 검은색으로 강조 (필터 활성 칩과 동일 톤) */
+.weekly-chart-bar-wrapper--today .weekly-chart-bar { background: #1d1d1f; }
+.weekly-chart-bar-wrapper--today .weekly-chart-label { color: #1d1d1f; font-weight: 600; }
+.weekly-chart-bar-wrapper--today .weekly-chart-count { color: #1d1d1f; font-weight: 600; }
+
+.weekly-chart-empty { text-align: center; color: #8e8e93; font-size: 0.85rem; padding: 1.5rem 0; }
+
+/* ─────────────────────────────────────────────
+   FR-10: 과목별 완료율 (Day 15 추가)
+   ADR-003 일관 적용 — CSS width %로 직접
+   ───────────────────────────────────────────── */
+
+.subject-stats {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e5e5ea;
+}
+.subject-stats:empty { margin: 0; padding: 0; border: 0; }
+
+.subject-stats-title {
+  font-size: 0.8rem;
+  color: #6e6e73;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.02em;
 }
 
-.weekly-chart-bar-wrapper--today .weekly-chart-label {
-  color: #1d1d1f;
-  font-weight: 600;
+.subject-stats-row {
+  margin-bottom: 0.75rem;
 }
 
-.weekly-chart-bar-wrapper--today .weekly-chart-count {
-  color: #1d1d1f;
-  font-weight: 600;
+.subject-stats-row:last-child {
+  margin-bottom: 0;
 }
 
-/* 검증 기준 2: 데이터 0건일 때 메시지 */
-.weekly-chart-empty {
-  text-align: center;
-  color: #8e8e93;
+.subject-stats-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
   font-size: 0.85rem;
-  padding: 1.5rem 0;
+}
+
+.subject-stats-name {
+  color: #1d1d1f;
+  font-weight: 500;
+}
+
+.subject-stats-meta {
+  color: #6e6e73;
+  font-size: 0.8rem;
+}
+
+.subject-stats-bar-track {
+  height: 8px;
+  background: #f5f5f7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.subject-stats-bar-fill {
+  height: 100%;
+  background: #0071e3;
+  border-radius: 999px;
+  transition: width 0.3s ease;
 }

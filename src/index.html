@@ -8,7 +8,6 @@
 </head>
 <body>
   <main id="app">
-    <!-- 영역 A: 헤더 -->
     <header class="board-header">
       <div class="board-title">
         <h1>Study Planner</h1>
@@ -17,7 +16,6 @@
       <div class="progress-card" id="progress-card"></div>
     </header>
 
-    <!-- 영역 B: 입력 -->
     <section class="board-input">
       <input type="text" id="task-title-input"
              placeholder="학습 항목을 입력하세요... (Enter로 추가)" autocomplete="off">
@@ -26,10 +24,8 @@
       <button id="add-task-button" disabled>추가</button>
     </section>
 
-    <!-- 영역 C: 필터 -->
     <section class="board-filter" id="filter-area"></section>
 
-    <!-- 영역 D: 항목 목록 -->
     <section class="board-list">
       <ul id="task-list"></ul>
       <p id="empty-state" class="empty-state">
@@ -37,10 +33,9 @@
       </p>
     </section>
 
-    <!-- 영역 E: 주간 차트 (Day 14 추가 - FR-09) -->
-    <section class="weekly-chart" id="weekly-chart">
-      <!-- 차트는 app.js의 renderWeeklyChart()에서 동적 생성 -->
-    </section>
+    <!-- 영역 E: 통계 (Day 14 차트 + Day 15 과목별) -->
+    <section class="weekly-chart" id="weekly-chart"></section>
+    <section class="subject-stats" id="subject-stats"></section>
   </main>
 
   <script src="app.js"></script>
