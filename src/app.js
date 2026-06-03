@@ -1,12 +1,12 @@
 /**
- * Study Planner — v0.2 (FR-01,02,03,04,06,07,08,09,10)
+ * Study Planner — v0.2→v1.0 작업 중
  *
- * Day 15 추가: FR-10 (과목별 완료율 진행 바)
- *   - renderSubjectStats() — ADR-003 패턴 재사용 (CSS width %)
- *   - renderAll() 확장
+ * Day 16 추가: FR-11 (학습 항목 제목 수정)
+ *   - startEditingTask, saveEditingTask, cancelEditingTask 함수
+ *   - 수정 모드 상태 추적 (editingTaskId)
+ *   - 이벤트 위임으로 제목 클릭 / Enter / Esc / blur 처리
  *
- * 참조: SRS 0.3 FR-10, UC-05; 03-wireframes 5.2; 04-data-model 5.3;
- *      ADR-002, ADR-003.
+ * 참조: SRS 0.3 FR-11; 03-wireframes 4.2; ADR-002.
  */
 
 // ─────────────────────────────────────────────
@@ -25,6 +25,9 @@ const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
 let tasks = [];
 let currentFilter = FILTER_ALL;
 
+/** @type {string|null} 현재 수정 중인 항목의 id (Day 16 추가) */
+let editingTaskId = null;
+
 // ─────────────────────────────────────────────
 // DOM 참조
 // ─────────────────────────────────────────────
@@ -38,7 +41,7 @@ const todayDateEl = document.getElementById('today-date');
 const filterAreaEl = document.getElementById('filter-area');
 const progressCardEl = document.getElementById('progress-card');
 const weeklyChartEl = document.getElementById('weekly-chart');
-const subjectStatsEl = document.getElementById('subject-stats');   // Day 15
+const subjectStatsEl = document.getElementById('subject-stats');
 
 // ─────────────────────────────────────────────
 // FR-04: localStorage
@@ -109,10 +112,13 @@ function updateAddButtonState() {
 }
 
 // ─────────────────────────────────────────────
-// FR-02: 토글
+// FR-02: 토글 (Day 16: 수정 중일 때 동작 조정)
 // ─────────────────────────────────────────────
 
 function toggleTaskCompletion(taskId) {
+  // 의도적 모호함 6에 대한 결정: 수정 중인 항목은 토글 무시 (사용자 의도 보호)
+  if (editingTaskId === taskId) return;
+
   const task = tasks.find(t => t.id === taskId);
   if (!task) return;
 
@@ -140,6 +146,9 @@ function deleteTask(taskId) {
   if (currentFilter !== FILTER_ALL && !subjects.has(currentFilter)) {
     currentFilter = FILTER_ALL;
   }
+
+  // 삭제한 항목이 수정 중이었으면 수정 모드 해제
+  if (editingTaskId === taskId) editingTaskId = null;
 
   saveTasks();
   renderAll();
@@ -184,6 +193,10 @@ function getFilteredTasks() {
 }
 
 function setFilter(filter) {
+  // 의도적 모호함 5에 대한 결정: 필터 변경 시 수정 중이면 저장 후 변경
+  if (editingTaskId !== null) {
+    saveEditingTask();
+  }
   currentFilter = filter;
   renderAll();
 }
@@ -283,22 +296,12 @@ function renderWeeklyChart() {
 }
 
 // ─────────────────────────────────────────────
-// FR-10: 과목별 완료율 (Day 15 추가)
+// FR-10: 과목별 완료율
 // ─────────────────────────────────────────────
 
-/**
- * 각 과목의 완료율을 계산하여 진행 바로 표시.
- * 04-data-model 5.3 알고리즘: completed / total * 100, 완료율 내림차순.
- * 필터(currentFilter)와 무관 — 항상 전체 데이터 기준.
- */
 function renderSubjectStats() {
-  // 검증 기준 2: 데이터 0건 시 영역 자체 비움
-  if (tasks.length === 0) {
-    subjectStatsEl.innerHTML = '';
-    return;
-  }
+  if (tasks.length === 0) { subjectStatsEl.innerHTML = ''; return; }
 
-  // 과목별 그룹화
   const grouped = {};
   tasks.forEach(t => {
     if (!grouped[t.subject]) grouped[t.subject] = { total: 0, completed: 0 };
@@ -306,12 +309,9 @@ function renderSubjectStats() {
     if (t.completed) grouped[t.subject].completed += 1;
   });
 
-  // 04-data-model 5.3 알고리즘 + 완료율 내림차순 정렬 (검증 기준 5)
   const items = Object.entries(grouped)
     .map(([subject, { total, completed }]) => ({
-      subject,
-      total,
-      completed,
+      subject, total, completed,
       rate: Math.round((completed / total) * 100)
     }))
     .sort((a, b) => b.rate - a.rate);
@@ -335,6 +335,68 @@ function renderSubjectStats() {
 }
 
 // ─────────────────────────────────────────────
+// FR-11: 제목 수정 (Day 16 추가)
+// ─────────────────────────────────────────────
+
+/**
+ * 수정 모드 진입. 해당 항목의 제목 영역을 input으로 교체.
+ * @param {string} taskId
+ */
+function startEditingTask(taskId) {
+  // 의도적 모호함 5에 대한 결정: 다른 항목 수정 중이었으면 그 항목부터 저장
+  if (editingTaskId !== null && editingTaskId !== taskId) {
+    saveEditingTask();
+  }
+
+  editingTaskId = taskId;
+  renderTaskList();
+
+  // 렌더링 후 input에 포커스 + 텍스트 전체 선택
+  // setTimeout 0으로 다음 tick에서 실행 — DOM이 갱신된 후
+  setTimeout(() => {
+    const input = taskListEl.querySelector('.task-item-title-input');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 0);
+}
+
+/**
+ * 현재 수정 중인 제목을 저장. Enter 또는 다른 곳 클릭 시 호출.
+ * 의도적 모호함 4 대응: 빈 제목은 저장하지 않고 원래 값 유지.
+ */
+function saveEditingTask() {
+  if (editingTaskId === null) return;
+
+  const input = taskListEl.querySelector('.task-item-title-input');
+  if (!input) {
+    editingTaskId = null;
+    return;
+  }
+
+  const newTitle = input.value.trim();
+  const task = tasks.find(t => t.id === editingTaskId);
+
+  if (task && newTitle && newTitle !== task.title) {
+    // 의도적 모호함 4: 빈 제목은 저장 안 함, 변경 없으면 저장 안 함
+    task.title = newTitle;
+    saveTasks();
+  }
+
+  editingTaskId = null;
+  renderAll();
+}
+
+/**
+ * 수정 취소 — Esc 시 호출. 변경 사항 버림.
+ */
+function cancelEditingTask() {
+  editingTaskId = null;
+  renderAll();
+}
+
+// ─────────────────────────────────────────────
 // 렌더링
 // ─────────────────────────────────────────────
 
@@ -343,7 +405,7 @@ function renderAll() {
   renderFilterChips();
   renderTaskList();
   renderWeeklyChart();
-  renderSubjectStats();   // Day 15 추가
+  renderSubjectStats();
 }
 
 function renderTaskList() {
@@ -366,6 +428,15 @@ function renderTaskList() {
     const completedMeta = task.completed && task.completedAt
       ? ` <span class="task-item-completed-time">→ 완료 ${formatTime(task.completedAt)}</span>`
       : '';
+    const isEditing = editingTaskId === task.id;
+
+    // FR-11: 수정 모드면 input, 아니면 일반 div
+    const titleHtml = isEditing
+      ? `<input type="text" class="task-item-title-input"
+                value="${escapeHtml(task.title)}"
+                aria-label="제목 수정">`
+      : `<div class="task-item-title" tabindex="0"
+              role="button" aria-label="${escapeHtml(task.title)} 수정">${escapeHtml(task.title)}</div>`;
 
     return `
       <li class="task-item${modifierClass}" data-task-id="${task.id}">
@@ -373,7 +444,7 @@ function renderTaskList() {
                ${task.completed ? 'checked' : ''}
                aria-label="${escapeHtml(task.title)} 완료 토글">
         <div class="task-item-body">
-          <div class="task-item-title">${escapeHtml(task.title)}</div>
+          ${titleHtml}
           <div class="task-item-meta">
             ${escapeHtml(task.subject)} · ${formatTime(task.createdAt)}${completedMeta}
           </div>
@@ -408,16 +479,61 @@ addButton.addEventListener('click', addTask);
 titleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !addButton.disabled) addTask(); });
 subjectInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !addButton.disabled) addTask(); });
 
+// FR-02: 체크박스
 taskListEl.addEventListener('change', (e) => {
   if (!e.target.classList.contains('task-item-checkbox')) return;
   const taskItem = e.target.closest('.task-item');
   if (taskItem) toggleTaskCompletion(taskItem.dataset.taskId);
 });
 
+// FR-03 + FR-11: 클릭 — 삭제 또는 수정 모드 진입
 taskListEl.addEventListener('click', (e) => {
-  if (!e.target.classList.contains('task-item-delete')) return;
+  // 삭제 버튼
+  if (e.target.classList.contains('task-item-delete')) {
+    const taskItem = e.target.closest('.task-item');
+    if (taskItem) deleteTask(taskItem.dataset.taskId);
+    return;
+  }
+
+  // FR-11: 제목 클릭 → 수정 모드 진입
+  if (e.target.classList.contains('task-item-title')) {
+    const taskItem = e.target.closest('.task-item');
+    if (taskItem) startEditingTask(taskItem.dataset.taskId);
+    return;
+  }
+});
+
+// FR-11: 수정 중 Enter/Esc 키 처리
+taskListEl.addEventListener('keydown', (e) => {
+  if (!e.target.classList.contains('task-item-title-input')) return;
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    saveEditingTask();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    cancelEditingTask();
+  }
+});
+
+// FR-11 + NFR-04 키보드 접근성: 제목에 포커스 + Enter 시 수정 모드
+taskListEl.addEventListener('keydown', (e) => {
+  if (!e.target.classList.contains('task-item-title')) return;
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+
+  e.preventDefault();
   const taskItem = e.target.closest('.task-item');
-  if (taskItem) deleteTask(taskItem.dataset.taskId);
+  if (taskItem) startEditingTask(taskItem.dataset.taskId);
+});
+
+// FR-11: 수정 input의 blur — 의도적 모호함 5에 대한 결정
+// blur가 발생하면 (다른 곳 클릭, Tab 이탈 등) 저장 처리
+taskListEl.addEventListener('focusout', (e) => {
+  if (!e.target.classList.contains('task-item-title-input')) return;
+  // setTimeout 0으로 click 이벤트가 먼저 처리되게 함
+  setTimeout(() => {
+    if (editingTaskId !== null) saveEditingTask();
+  }, 100);
 });
 
 filterAreaEl.addEventListener('click', (e) => {
@@ -434,4 +550,4 @@ tasks = loadTasks();
 renderTodayDate();
 renderAll();
 
-console.log('Study Planner v0.2 (FR-10 added) —', tasks.length, 'tasks loaded');
+console.log('Study Planner v0.2 (FR-11 edit) —', tasks.length, 'tasks loaded');

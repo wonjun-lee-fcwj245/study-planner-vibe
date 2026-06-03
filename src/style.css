@@ -1,6 +1,6 @@
 /* ============================================
-   Study Planner styles — v0.2
-   Day 15 추가: FR-10 과목별 완료율 진행 바
+   Study Planner styles — v0.2→v1.0
+   Day 16 추가: FR-11 제목 수정 input
    ============================================ */
 
 * { box-sizing: border-box; }
@@ -37,7 +37,7 @@ body {
 .board-title h1 { font-size: 1.25rem; font-weight: 600; margin: 0; }
 .board-date { font-size: 0.875rem; color: #6e6e73; margin: 0.25rem 0 0 0; }
 
-/* FR-08: 진도 카드 */
+/* FR-08 진도 카드 */
 .progress-card {
   background: #f5f5f7;
   border-radius: 10px;
@@ -46,8 +46,7 @@ body {
   min-width: 90px;
   transition: background 0.2s ease;
 }
-
-.progress-card-label { font-size: 0.7rem; color: #6e6e73; margin-bottom: 0.15rem; letter-spacing: 0.02em; }
+.progress-card-label { font-size: 0.7rem; color: #6e6e73; margin-bottom: 0.15rem; }
 .progress-card-value { font-size: 1.25rem; font-weight: 600; color: #1d1d1f; line-height: 1; }
 .progress-card-detail { font-size: 0.7rem; color: #8e8e93; margin-top: 0.2rem; }
 .progress-card-empty { font-size: 0.85rem; color: #8e8e93; }
@@ -113,7 +112,40 @@ body {
 
 .task-item-checkbox { width: 18px; height: 18px; cursor: pointer; }
 .task-item-body { flex: 1; }
-.task-item-title { font-size: 0.95rem; transition: text-decoration 0.2s ease; }
+
+/* 제목 영역 — 일반 모드 (Day 16: 클릭 가능 표시) */
+.task-item-title {
+  font-size: 0.95rem;
+  transition: text-decoration 0.2s ease;
+  cursor: text;
+  padding: 0.1rem 0.25rem;
+  margin: -0.1rem -0.25rem;
+  border-radius: 4px;
+}
+
+.task-item-title:hover {
+  background: #f5f5f7;
+}
+
+/* NFR-04 키보드 포커스 */
+.task-item-title:focus {
+  outline: 2px solid #0071e3;
+  outline-offset: 1px;
+}
+
+/* FR-11: 제목 수정 input (Day 16 추가) */
+.task-item-title-input {
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 0.1rem 0.25rem;
+  margin: -0.1rem -0.25rem;
+  border: 1px solid #0071e3;
+  border-radius: 4px;
+  background: #ffffff;
+  width: 100%;
+  outline: none;
+}
+
 .task-item-meta { font-size: 0.8rem; color: #6e6e73; margin-top: 0.15rem; }
 .task-item-completed-time { color: #34c759; font-weight: 500; }
 
@@ -138,120 +170,29 @@ body {
 .empty-state { text-align: center; color: #8e8e93; padding: 2rem 0; margin: 0; }
 .empty-state[hidden] { display: none; }
 
-/* ─────────────────────────────────────────────
-   FR-09: 주간 차트 (Day 14)
-   ───────────────────────────────────────────── */
-
+/* FR-09 주간 차트 */
 .weekly-chart { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e5e5ea; }
 .weekly-chart:empty { margin: 0; padding: 0; border: 0; }
+.weekly-chart-title { font-size: 0.8rem; color: #6e6e73; margin-bottom: 0.75rem; }
 
-.weekly-chart-title {
-  font-size: 0.8rem;
-  color: #6e6e73;
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.02em;
-}
-
-.weekly-chart-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-  height: 100px;
-  padding: 0 0.25rem;
-}
-
-.weekly-chart-bar-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  position: relative;
-}
-
-.weekly-chart-bar {
-  width: 100%;
-  background: #0071e3;
-  border-radius: 4px 4px 0 0;
-  min-height: 2px;
-  transition: height 0.3s ease;
-}
-
-.weekly-chart-count {
-  position: absolute;
-  top: -1.1rem;
-  font-size: 0.7rem;
-  color: #6e6e73;
-  font-weight: 500;
-}
-
-.weekly-chart-label {
-  font-size: 0.7rem;
-  color: #8e8e93;
-  margin-top: 0.35rem;
-}
-
+.weekly-chart-bars { display: flex; align-items: flex-end; gap: 0.5rem; height: 100px; padding: 0 0.25rem; }
+.weekly-chart-bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
+.weekly-chart-bar { width: 100%; background: #0071e3; border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.3s ease; }
+.weekly-chart-count { position: absolute; top: -1.1rem; font-size: 0.7rem; color: #6e6e73; font-weight: 500; }
+.weekly-chart-label { font-size: 0.7rem; color: #8e8e93; margin-top: 0.35rem; }
 .weekly-chart-bar-wrapper--today .weekly-chart-bar { background: #1d1d1f; }
 .weekly-chart-bar-wrapper--today .weekly-chart-label { color: #1d1d1f; font-weight: 600; }
 .weekly-chart-bar-wrapper--today .weekly-chart-count { color: #1d1d1f; font-weight: 600; }
-
 .weekly-chart-empty { text-align: center; color: #8e8e93; font-size: 0.85rem; padding: 1.5rem 0; }
 
-/* ─────────────────────────────────────────────
-   FR-10: 과목별 완료율 (Day 15 추가)
-   ADR-003 일관 적용 — CSS width %로 직접
-   ───────────────────────────────────────────── */
-
-.subject-stats {
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #e5e5ea;
-}
+/* FR-10 과목별 완료율 */
+.subject-stats { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e5e5ea; }
 .subject-stats:empty { margin: 0; padding: 0; border: 0; }
-
-.subject-stats-title {
-  font-size: 0.8rem;
-  color: #6e6e73;
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.02em;
-}
-
-.subject-stats-row {
-  margin-bottom: 0.75rem;
-}
-
-.subject-stats-row:last-child {
-  margin-bottom: 0;
-}
-
-.subject-stats-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.3rem;
-  font-size: 0.85rem;
-}
-
-.subject-stats-name {
-  color: #1d1d1f;
-  font-weight: 500;
-}
-
-.subject-stats-meta {
-  color: #6e6e73;
-  font-size: 0.8rem;
-}
-
-.subject-stats-bar-track {
-  height: 8px;
-  background: #f5f5f7;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.subject-stats-bar-fill {
-  height: 100%;
-  background: #0071e3;
-  border-radius: 999px;
-  transition: width 0.3s ease;
-}
+.subject-stats-title { font-size: 0.8rem; color: #6e6e73; margin-bottom: 0.75rem; }
+.subject-stats-row { margin-bottom: 0.75rem; }
+.subject-stats-row:last-child { margin-bottom: 0; }
+.subject-stats-header { display: flex; justify-content: space-between; margin-bottom: 0.3rem; font-size: 0.85rem; }
+.subject-stats-name { color: #1d1d1f; font-weight: 500; }
+.subject-stats-meta { color: #6e6e73; font-size: 0.8rem; }
+.subject-stats-bar-track { height: 8px; background: #f5f5f7; border-radius: 999px; overflow: hidden; }
+.subject-stats-bar-fill { height: 100%; background: #0071e3; border-radius: 999px; transition: width 0.3s ease; }
