@@ -16,26 +16,146 @@
       <div class="progress-card" id="progress-card"></div>
     </header>
 
-    <section class="board-input">
-      <input type="text" id="task-title-input"
-             placeholder="학습 항목을 입력하세요... (Enter로 추가)" autocomplete="off">
-      <input type="text" id="task-subject-input"
-             placeholder="과목 (선택)" autocomplete="off">
-      <button id="add-task-button" disabled>추가</button>
-    </section>
+    <nav class="tab-nav" id="tab-nav">
+      <button class="tab-nav-btn tab-nav-btn--active" data-page="home">홈</button>
+      <button class="tab-nav-btn" data-page="stats">통계</button>
+      <button class="tab-nav-btn" data-page="schedule">시간표</button>
+      <button class="tab-nav-btn" data-page="settings">설정</button>
+    </nav>
 
-    <section class="board-filter" id="filter-area"></section>
+    <!-- 홈 페이지 -->
+    <div class="page page--active" data-page="home">
+      <section class="streak-card" id="streak-card"></section>
 
-    <section class="board-list">
-      <ul id="task-list"></ul>
-      <p id="empty-state" class="empty-state">
-        오늘 학습할 내용을 추가해보세요
-      </p>
-    </section>
+      <section class="dday-section" id="dday-section"></section>
 
-    <!-- 영역 E: 통계 (Day 14 차트 + Day 15 과목별) -->
-    <section class="weekly-chart" id="weekly-chart"></section>
-    <section class="subject-stats" id="subject-stats"></section>
+      <section class="pomodoro-section" id="pomodoro-section"></section>
+
+      <section class="calendar" id="calendar-section">
+        <div class="calendar-header">
+          <button id="cal-prev">&lt;</button>
+          <span id="cal-month-label" class="calendar-month-label">2026년 6월</span>
+          <button id="cal-next">&gt;</button>
+        </div>
+        <div class="calendar-grid" id="cal-grid"></div>
+      </section>
+      <p class="selected-date-label" id="selected-date-label">6월 6일 (금) 학습 항목</p>
+
+      <section class="board-input">
+        <div class="board-input-row">
+          <input type="text" id="task-title-input"
+                 placeholder="학습 항목을 입력하세요... (Enter로 추가)" autocomplete="off">
+          <button id="add-task-button" disabled>추가</button>
+        </div>
+        <div class="board-input-row">
+          <input type="text" id="task-subject-input"
+                 placeholder="과목 (선택)" autocomplete="off">
+          <select id="task-priority-input">
+            <option value="medium">보통</option>
+            <option value="high">높음</option>
+            <option value="low">낮음</option>
+          </select>
+          <input type="text" id="task-memo-input"
+                 placeholder="메모 (선택)" autocomplete="off">
+        </div>
+      </section>
+
+      <section class="board-filter" id="filter-area"></section>
+
+      <section class="board-list">
+        <ul id="task-list"></ul>
+        <p id="empty-state" class="empty-state">
+          학습할 내용을 추가해보세요
+        </p>
+      </section>
+    </div>
+
+    <!-- 통계 페이지 -->
+    <div class="page" data-page="stats">
+      <section class="stats-summary-card" id="stats-summary-card"></section>
+      <section class="study-time-chart" id="study-time-chart"></section>
+      <section class="monthly-chart" id="monthly-chart"></section>
+      <section class="completion-stats" id="completion-stats"></section>
+      <section class="subject-stats" id="subject-stats"></section>
+    </div>
+
+    <!-- 시간표 페이지 -->
+    <div class="page" data-page="schedule">
+      <section class="timetable-section" id="timetable-section">
+        <div class="timetable-toolbar">
+          <span class="timetable-title">시간표</span>
+          <button class="timetable-add-btn" id="timetable-add-btn">+ 추가</button>
+        </div>
+        <div class="timetable-form" id="timetable-form" hidden>
+          <div class="timetable-form-row">
+            <input type="text" id="tt-subject" class="tt-input" placeholder="과목명">
+          </div>
+          <div class="timetable-form-row">
+            <select id="tt-day" class="tt-select">
+              <option value="1">월</option>
+              <option value="2">화</option>
+              <option value="3">수</option>
+              <option value="4">목</option>
+              <option value="5">금</option>
+            </select>
+            <input type="time" id="tt-start" class="tt-input" value="09:00" step="1800">
+            <span class="tt-separator">~</span>
+            <input type="time" id="tt-end" class="tt-input" value="10:30" step="1800">
+          </div>
+          <div class="timetable-form-row">
+            <button id="tt-save" class="tt-save-btn">저장</button>
+            <button id="tt-cancel" class="tt-cancel-btn">취소</button>
+            <button id="tt-delete" class="tt-delete-btn" hidden>삭제</button>
+          </div>
+        </div>
+        <div class="timetable-grid-wrapper" id="timetable-grid-wrapper"></div>
+      </section>
+    </div>
+
+    <!-- 설정 페이지 -->
+    <div class="page" data-page="settings">
+      <section class="settings-section" id="settings-section">
+        <h2 class="settings-title">목표 설정</h2>
+        <div class="settings-row">
+          <label class="settings-label" for="settings-goal-input">일일 완료 목표</label>
+          <div class="settings-input-group">
+            <input type="number" id="settings-goal-input" class="settings-goal-input" min="1" step="1" value="1">
+            <span class="settings-unit">개</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <label class="settings-label" for="settings-weekly-goal-input">주간 완료 목표</label>
+          <div class="settings-input-group">
+            <input type="number" id="settings-weekly-goal-input" class="settings-goal-input" min="1" step="1" value="15">
+            <span class="settings-unit">개</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <label class="settings-label" for="settings-study-minutes-input">일일 공부시간 목표</label>
+          <div class="settings-input-group">
+            <input type="number" id="settings-study-minutes-input" class="settings-goal-input" min="1" step="5" value="120">
+            <span class="settings-unit">분</span>
+          </div>
+        </div>
+        <button id="settings-goal-save" class="settings-goal-save" style="margin-top:0.75rem;width:100%">저장</button>
+      </section>
+
+      <section class="settings-section" id="dday-settings-section">
+        <h2 class="settings-title">D-day 관리</h2>
+        <div class="dday-settings-form">
+          <input type="text" id="dday-title-input" class="dday-input" placeholder="일정 이름">
+          <input type="date" id="dday-date-input" class="dday-input">
+          <button id="dday-add-button" class="dday-add-btn">추가</button>
+        </div>
+        <ul id="dday-list" class="dday-manage-list"></ul>
+      </section>
+
+      <section class="settings-section">
+        <h2 class="settings-title">데이터 관리</h2>
+        <button id="reset-data-button" class="settings-reset-btn">데이터 초기화</button>
+        <p class="settings-reset-desc">모든 학습 데이터, 시간표, 목표 설정이 삭제됩니다.</p>
+      </section>
+    </div>
   </main>
 
   <script src="app.js"></script>
